@@ -4,7 +4,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 export default function DishARView({ dish, onBack }) {
   const videoRef = useRef(null);
-  const canvasContainerRef = useRef(null);
+  const canvasRef = useRef(null);
 
   useEffect(() => {
     let stream;
@@ -26,18 +26,21 @@ export default function DishARView({ dish, onBack }) {
     }
 
     function initThree() {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-
       renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-      renderer.setSize(width, height);
+      renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(window.devicePixelRatio);
 
-      canvasContainerRef.current.innerHTML = "";
-      canvasContainerRef.current.appendChild(renderer.domElement);
+      canvasRef.current.innerHTML = "";
+      canvasRef.current.appendChild(renderer.domElement);
 
       scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+
+      camera = new THREE.PerspectiveCamera(
+        45,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        100
+      );
       camera.position.set(0, 1, 4);
 
       const light = new THREE.DirectionalLight(0xffffff, 1);
@@ -47,12 +50,12 @@ export default function DishARView({ dish, onBack }) {
       const ambient = new THREE.AmbientLight(0xffffff, 0.6);
       scene.add(ambient);
 
-      // 🔥 Correction GitHub Pages : import.meta.env.BASE_URL
-      const glbPath = import.meta.env.BASE_URL + "models/Pasta.glb";
+      // 🔥 FORMULE QUI MARCHE SUR VITE + GITHUB PAGES + LOCAL
+      const path = import.meta.env.BASE_URL + "models/Pasta.glb";
 
       const loader = new GLTFLoader();
       loader.load(
-        glbPath,
+        path,
         (gltf) => {
           model = gltf.scene;
           model.scale.set(1, 1, 1);
@@ -60,14 +63,17 @@ export default function DishARView({ dish, onBack }) {
           scene.add(model);
         },
         undefined,
-        (error) => console.error("Erreur GLB :", error)
+        (err) => console.error("Erreur chargement glb :", err)
       );
 
       const animate = () => {
         animationFrameId = requestAnimationFrame(animate);
+
         if (model) model.rotation.y += 0.005;
+
         renderer.render(scene, camera);
       };
+
       animate();
     }
 
@@ -97,11 +103,10 @@ export default function DishARView({ dish, onBack }) {
       />
 
       <div
-        ref={canvasContainerRef}
+        ref={canvasRef}
         style={{
           position: "absolute",
-          width: "100%",
-          height: "100%",
+          inset: 0,
           pointerEvents: "none",
         }}
       />
