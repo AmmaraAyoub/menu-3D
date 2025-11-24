@@ -47,15 +47,16 @@ export default function DishARView({ dish, onBack }) {
       const ambient = new THREE.AmbientLight(0xffffff, 0.6);
       scene.add(ambient);
 
+      // 🔥 Correction GitHub Pages : import.meta.env.BASE_URL
+      const glbPath = import.meta.env.BASE_URL + "models/Pasta.glb";
+
       const loader = new GLTFLoader();
       loader.load(
-        "/models/Pasta.glb", // 🔥 ADAPTÉ À TON FICHIER
+        glbPath,
         (gltf) => {
           model = gltf.scene;
-
           model.scale.set(1, 1, 1);
           model.position.set(0, -0.8, 0);
-
           scene.add(model);
         },
         undefined,
