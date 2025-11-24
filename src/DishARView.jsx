@@ -1,10 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 export default function DishARView({ dish, onBack }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+
+  const [debugInfo, setDebugInfo] = useState("Chargement du modèle...");
 
   useEffect(() => {
     let stream;
@@ -18,8 +20,10 @@ export default function DishARView({ dish, onBack }) {
           audio: false,
         });
 
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+        }
       } catch (err) {
         console.error("Erreur caméra :", err);
       }
@@ -30,6 +34,7 @@ export default function DishARView({ dish, onBack }) {
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(window.devicePixelRatio);
 
+      if (!canvasRef.current) return;
       canvasRef.current.innerHTML = "";
       canvasRef.current.appendChild(renderer.domElement);
 
@@ -50,7 +55,7 @@ export default function DishARView({ dish, onBack }) {
       const ambient = new THREE.AmbientLight(0xffffff, 0.6);
       scene.add(ambient);
 
-      // 🔥 FORMULE QUI MARCHE SUR VITE + GITHUB PAGES + LOCAL
+      // 🔥 Chemin compatible local + GitHub Pages
       const path = import.meta.env.BASE_URL + "models/Pasta.glb";
 
       const loader = new GLTFLoader();
@@ -58,18 +63,36 @@ export default function DishARView({ dish, onBack }) {
         path,
         (gltf) => {
           model = gltf.scene;
+
+          // Valeurs de base (on ajustera après les tests)
           model.scale.set(1, 1, 1);
           model.position.set(0, -0.8, 0);
+
           scene.add(model);
+          setDebugInfo("Modèle chargé, en cours de rendu...");
         },
         undefined,
-        (err) => console.error("Erreur chargement glb :", err)
+        (err) => {
+          console.error("Erreur chargement glb :", err);
+          setDebugInfo("Erreur chargement modèle");
+        }
       );
 
       const animate = () => {
         animationFrameId = requestAnimationFrame(animate);
 
-        if (model) model.rotation.y += 0.005;
+        if (model) {
+          model.rotation.y += 0.005;
+
+          const pos = model.position;
+          const scale = model.scale;
+
+          setDebugInfo(
+            `Pos: ${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(
+              2
+            )} | Scale: ${scale.x.toFixed(2)}`
+          );
+        }
 
         renderer.render(scene, camera);
       };
@@ -81,7 +104,9 @@ export default function DishARView({ dish, onBack }) {
     initThree();
 
     return () => {
-      if (stream) stream.getTracks().forEach((t) => t.stop());
+      if (stream) {
+        stream.getTracks().forEach((t) => t.stop());
+      }
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       if (renderer) renderer.dispose();
     };
@@ -140,7 +165,20 @@ export default function DishARView({ dish, onBack }) {
       >
         <div style={{ fontSize: 18, fontWeight: 600 }}>{dish.name}</div>
         <div style={{ fontSize: 14 }}>{dish.description}</div>
-        <div style={{ fontSize: 16, fontWeight: 700, textAlign: "right" }}>
+
+        {/* Infos debug pour les tests */}
+        <div style={{ fontSize: 12, opacity: 0.85, marginTop: 4 }}>
+          {debugInfo}
+        </div>
+
+        <div
+          style={{
+            fontSize: 16,
+            fontWeight: 700,
+            textAlign: "right",
+            marginTop: 4,
+          }}
+        >
           {dish.price}
         </div>
       </div>
