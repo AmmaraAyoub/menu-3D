@@ -3,5 +3,5 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
-  base: "/menu-3D/",   // 🔥 EXACTEMENT TON REPO (respecte la majuscule du D)
+  base: "/menu-3D/", // 🔥 TON REPO EXACT AVEC MAJUSCULE
 });
